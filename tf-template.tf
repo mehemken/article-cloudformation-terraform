@@ -2,6 +2,9 @@
 provider "aws" {
   access_key = "AKIAJPSW4P44SMOTWECQ" /* null and void */
   secret_key = "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"
+  /* Luckily those were not the Root account creds.
+  Always create a new user with limited permissions
+  when using Terraform. */
   region = "us-west-2"
 }
 
