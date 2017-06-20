@@ -1,0 +1,185 @@
+---
+Description:
+  This template spins up a few EC2 instances for use with ansible.
+
+Parameters:
+  UbuntuKey:
+    Type: String
+    Default: cf-demo
+  UbuntuImage:
+    Type: String
+    Default: ami-efd0428f
+  UbuntuServerName:
+    Type: String
+    Default: ubu-server-
+
+Resources:
+
+##############################  VPC
+  SandboxVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      Tags:
+        - Key: Project
+          Value: ansible
+  SandboxSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: 10.0.0.0/24
+      VpcId: !Ref SandboxVPC
+      MapPublicIpOnLaunch: True
+      Tags:
+        - Key: Project
+          Value: ansible
+  Internet:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Project
+          Value: ansible
+  InternetAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      InternetGatewayId: !Ref Internet
+      VpcId: !Ref SandboxVPC
+  DemoRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref SandboxVPC
+      Tags:
+        - Key: Project
+          Value: ansible
+  DemoRoute:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref DemoRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref Internet
+  RouteAssoc:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref DemoRouteTable
+      SubnetId: !Ref SandboxSubnet
+
+##############################  Ubuntu servers
+  UbuntuControl:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref UbuntuImage
+      InstanceType: t2.nano
+      KeyName: !Ref UbuntuKey
+      SubnetId: !Ref SandboxSubnet
+      SecurityGroupIds:
+        - !GetAtt UbuntuSG.GroupId
+      Tags:
+        - Key: Name
+          Value: !Join ['', [!Ref UbuntuServerName, 'control']]
+        - Key: Project
+          Value: ansible
+  UbuntuOne:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref UbuntuImage
+      InstanceType: t2.nano
+      KeyName: !Ref UbuntuKey
+      SubnetId: !Ref SandboxSubnet
+      SecurityGroupIds:
+        - !GetAtt UbuntuSG.GroupId
+      Tags:
+        - Key: Name
+          Value: !Join ['', [!Ref UbuntuServerName, 'one']]
+        - Key: Project
+          Value: ansible
+  UbuntuTwo:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref UbuntuImage
+      InstanceType: t2.nano
+      KeyName: !Ref UbuntuKey
+      SubnetId: !Ref SandboxSubnet
+      SecurityGroupIds:
+        - !GetAtt UbuntuSG.GroupId
+      Tags:
+        - Key: Name
+          Value: !Join ['', [!Ref UbuntuServerName, 'two']]
+        - Key: Project
+          Value: ansible
+  RedHatOne:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: ami-6f68cf0f
+      InstanceType: t2.micro
+      KeyName: !Ref UbuntuKey
+      SubnetId: !Ref SandboxSubnet
+      SecurityGroupIds:
+        - !GetAtt UbuntuSG.GroupId
+      Tags:
+        - Key: Name
+          Value: redhat-server-one
+        - Key: Project
+          Value: ansible
+  Windows2016:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: ami-c2c3a2a2
+      InstanceType: t2.micro
+      KeyName: !Ref UbuntuKey
+      SubnetId: !Ref SandboxSubnet
+      SecurityGroupIds:
+        - !GetAtt UbuntuSG.GroupId
+      Tags:
+        - Key: Name
+          Value: windows-server-2016
+        - Key: Project
+          Value: ansible
+
+##############################  Security Groups
+  UbuntuSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: ubu-servers-sg
+      GroupDescription: Controls access to ubuntu servers
+      VpcId: !Ref SandboxVPC
+      Tags:
+        - Key: Project
+          Value: ansible
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 23.243.55.43/32
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 23.243.55.43/32
+
+##############################  Outputs
+Outputs:
+  PublicIpControl:
+    Value: !GetAtt UbuntuControl.PublicIp
+  PublicIpOne:
+    Value: !GetAtt UbuntuOne.PublicIp
+  PublicIpTwo:
+    Value: !GetAtt UbuntuTwo.PublicIp
+  RedHatOne:
+    Value: !GetAtt RedHatOne.PublicIp
+  Windows2016:
+    Value: !GetAtt Windows2016.PublicIp
