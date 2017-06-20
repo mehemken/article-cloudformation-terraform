@@ -156,7 +156,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 23.243.55.43/32
+          CidrIp: 0.0.0.0/0
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -169,7 +169,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 23.243.55.43/32
+          CidrIp: 0.0.0.0/0
 
 ##############################  Outputs
 Outputs:
